@@ -36,27 +36,50 @@ class SmsController(private val context: Context) {
     ): List<HashMap<String, String?>> {
         val messages = mutableListOf<HashMap<String, String?>>()
 
-        val cursor = context.contentResolver.query(
-            contentUri.uri,
-            projection.toTypedArray(),
-            selection,
-            selectionArgs?.toTypedArray(),
-            sortOrder
-        )
-
-        while (cursor != null && cursor.moveToNext()) {
-            val dataObject = HashMap<String, String?>(projection.size)
-            for (columnName in cursor.columnNames) {
-                val columnIndex = cursor.getColumnIndex(columnName)
-                if (columnIndex >= 0) {
-                    val value = cursor.getString(columnIndex)
-                    dataObject[columnName] = value
+        if (contentUri != ContentUri.CONVERSATIONS){
+            val cursor = context.contentResolver.query(
+                Uri.parse("content://sms"),
+                projection.toTypedArray(),
+                selection,
+                selectionArgs?.toTypedArray(),
+                sortOrder
+            )
+            while (cursor != null && cursor.moveToNext()) {
+                val dataObject = HashMap<String, String?>(projection.size)
+                for (columnName in cursor.columnNames) {
+                    val columnIndex = cursor.getColumnIndex(columnName)
+                    if (columnIndex >= 0) {
+                        val value = cursor.getString(columnIndex)
+                        dataObject[columnName] = value
+                    }
                 }
+                messages.add(dataObject)
             }
-            messages.add(dataObject)
+            cursor?.close()
+            return messages
         }
-        cursor?.close()
-        return messages
+        else{
+            val cursor = context.contentResolver.query(
+                contentUri.uri,
+                projection.toTypedArray(),
+                selection,
+                selectionArgs?.toTypedArray(),
+                sortOrder
+            )
+            while (cursor != null && cursor.moveToNext()) {
+                val dataObject = HashMap<String, String?>(projection.size)
+                for (columnName in cursor.columnNames) {
+                    val columnIndex = cursor.getColumnIndex(columnName)
+                    if (columnIndex >= 0) {
+                        val value = cursor.getString(columnIndex)
+                        dataObject[columnName] = value
+                    }
+                }
+                messages.add(dataObject)
+            }
+            cursor?.close()
+            return messages
+        }    
     }
 
     // SEND SMS
