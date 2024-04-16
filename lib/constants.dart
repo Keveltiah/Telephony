@@ -87,6 +87,7 @@ class _ConversationProjections {
   static const String SNIPPET = "snippet";
   static const String THREAD_ID = "thread_id";
   static const String MSG_COUNT = "msg_count";
+  static const String DATE = "date";
 }
 
 abstract class _TelephonyColumn {
@@ -131,6 +132,8 @@ class ConversationColumn extends _TelephonyColumn {
       ConversationColumn._(_ConversationProjections.THREAD_ID);
   static const MSG_COUNT =
       ConversationColumn._(_ConversationProjections.MSG_COUNT);
+  static const DATE =
+      ConversationColumn._(_ConversationProjections.DATE);
 
   @override
   String get _name => _columnName;
@@ -154,7 +157,8 @@ const INCOMING_SMS_COLUMNS = [
 const DEFAULT_CONVERSATION_COLUMNS = [
   ConversationColumn.SNIPPET,
   ConversationColumn.THREAD_ID,
-  ConversationColumn.MSG_COUNT
+  ConversationColumn.MSG_COUNT,
+  // ConversationColumn.DATE
 ];
 
 /// Represents types of SMS.

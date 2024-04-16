@@ -23,7 +23,6 @@ import com.shounakmulay.telephony.utils.Constants.SMS_TO
 import com.shounakmulay.telephony.utils.ContentUri
 import java.lang.RuntimeException
 
-
 class SmsController(private val context: Context) {
 
     // FETCH SMS
@@ -32,14 +31,53 @@ class SmsController(private val context: Context) {
         projection: List<String>,
         selection: String?,
         selectionArgs: List<String>?,
-        sortOrder: String?
+        sortOrder: String?,
+        limit: Int?
     ): List<HashMap<String, String?>> {
         val messages = mutableListOf<HashMap<String, String?>>()
-
         if (contentUri != ContentUri.CONVERSATIONS){
             val cursor = context.contentResolver.query(
                 Uri.parse("content://sms"),
                 projection.toTypedArray(),
+                selection,
+                selectionArgs?.toTypedArray(),
+                sortOrder
+            )
+            var i: Int = 0
+            var distictThreads = mutableListOf<String>()
+            while (cursor != null && cursor.moveToNext()) {
+                val dataObject = HashMap<String, String?>(projection.size)
+                var saveit = true
+                for (columnName in cursor.columnNames) {
+                    val columnIndex = cursor.getColumnIndex(columnName)
+                    if (columnIndex >= 0) {
+                        val value = cursor.getString(columnIndex)
+                        dataObject[columnName] = value
+                        if (columnName.toString() == "thread_id" &&  limit != null){
+                            if (value.toString() in distictThreads){
+                                saveit = false
+                            }else{
+                                distictThreads.add(value.toString())
+                                saveit = true
+                            }
+                        }
+                    }
+                }
+                if (saveit == true){
+                    messages.add(dataObject)
+                }
+                //i += 1
+                //if (limit != null && i == limit){
+                  //  return messages
+                //}
+            }
+            cursor?.close()
+            return messages
+        }
+        else{
+            var cursor = context.contentResolver.query(
+                Uri.parse("content://sms/conversations"),
+                arrayOf(),
                 selection,
                 selectionArgs?.toTypedArray(),
                 sortOrder
@@ -58,28 +96,9 @@ class SmsController(private val context: Context) {
             cursor?.close()
             return messages
         }
-        else{
-            val cursor = context.contentResolver.query(
-                contentUri.uri,
-                projection.toTypedArray(),
-                selection,
-                selectionArgs?.toTypedArray(),
-                sortOrder
-            )
-            while (cursor != null && cursor.moveToNext()) {
-                val dataObject = HashMap<String, String?>(projection.size)
-                for (columnName in cursor.columnNames) {
-                    val columnIndex = cursor.getColumnIndex(columnName)
-                    if (columnIndex >= 0) {
-                        val value = cursor.getString(columnIndex)
-                        dataObject[columnName] = value
-                    }
-                }
-                messages.add(dataObject)
-            }
-            cursor?.close()
-            return messages
-        }    
+        
+
+        
     }
 
     // SEND SMS

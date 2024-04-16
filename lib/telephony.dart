@@ -169,9 +169,10 @@ class Telephony {
   Future<List<SmsMessage>> getInboxSms(
       {List<SmsColumn> columns = DEFAULT_SMS_COLUMNS,
       SmsFilter? filter,
-      List<OrderBy>? sortOrder}) async {
+      List<OrderBy>? sortOrder,
+      int? limit}) async {
     assert(_platform.isAndroid == true, "Can only be called on Android.");
-    final args = _getArguments(columns, filter, sortOrder);
+    final args = _getArguments(columns, filter, sortOrder, limit);
 
     final messages =
         await _foregroundChannel.invokeMethod<List?>(GET_ALL_INBOX_SMS, args);
@@ -199,9 +200,10 @@ class Telephony {
   Future<List<SmsMessage>> getSentSms(
       {List<SmsColumn> columns = DEFAULT_SMS_COLUMNS,
       SmsFilter? filter,
-      List<OrderBy>? sortOrder}) async {
+      List<OrderBy>? sortOrder,
+      int? limit}) async {
     assert(_platform.isAndroid == true, "Can only be called on Android.");
-    final args = _getArguments(columns, filter, sortOrder);
+    final args = _getArguments(columns, filter, sortOrder, limit);
 
     final messages =
         await _foregroundChannel.invokeMethod<List?>(GET_ALL_SENT_SMS, args);
@@ -229,9 +231,10 @@ class Telephony {
   Future<List<SmsMessage>> getDraftSms(
       {List<SmsColumn> columns = DEFAULT_SMS_COLUMNS,
       SmsFilter? filter,
-      List<OrderBy>? sortOrder}) async {
+      List<OrderBy>? sortOrder,
+      int? limit}) async {
     assert(_platform.isAndroid == true, "Can only be called on Android.");
-    final args = _getArguments(columns, filter, sortOrder);
+    final args = _getArguments(columns, filter, sortOrder, limit);
 
     final messages =
         await _foregroundChannel.invokeMethod<List?>(GET_ALL_DRAFT_SMS, args);
@@ -256,9 +259,9 @@ class Telephony {
   ///
   /// [Future<List<SmsConversation>>]
   Future<List<SmsConversation>> getConversations(
-      {ConversationFilter? filter, List<OrderBy>? sortOrder}) async {
+      {ConversationFilter? filter, List<OrderBy>? sortOrder, int? limit}) async {
     assert(_platform.isAndroid == true, "Can only be called on Android.");
-    final args = _getArguments(DEFAULT_CONVERSATION_COLUMNS, filter, sortOrder);
+    final args = _getArguments(DEFAULT_CONVERSATION_COLUMNS, filter, sortOrder, limit);
 
     final conversations = await _foregroundChannel.invokeMethod<List?>(
         GET_ALL_CONVERSATIONS, args);
@@ -270,7 +273,7 @@ class Telephony {
   }
 
   Map<String, dynamic> _getArguments(List<_TelephonyColumn> columns,
-      Filter? filter, List<OrderBy>? sortOrder) {
+      Filter? filter, List<OrderBy>? sortOrder, int? limit) {
     final Map<String, dynamic> args = {};
 
     args["projection"] = columns.map((c) => c._name).toList();
@@ -282,6 +285,9 @@ class Telephony {
 
     if (sortOrder != null && sortOrder.isNotEmpty) {
       args["sort_order"] = sortOrder.map((o) => o._value).join(",");
+    }
+    if (limit != null) {
+      args["limit"] = limit;
     }
 
     return args;
@@ -670,6 +676,7 @@ class SmsConversation {
   String? snippet;
   int? threadId;
   int? messageCount;
+  // int? date;
 
   /// ## Do not call this method. This method is visible only for testing.
   @visibleForTesting
@@ -677,7 +684,15 @@ class SmsConversation {
     final conversation =
         Map.castFrom<dynamic, dynamic, String, dynamic>(rawConversation);
     for (var column in DEFAULT_CONVERSATION_COLUMNS) {
-      final String? value = conversation[column._columnName];
+      String? value;
+      int? valueInt;
+      try{
+        value = conversation[column._columnName];
+      }
+      catch (e){
+        print(e);
+        valueInt = conversation[column._columnName];
+      }
       switch (column._columnName) {
         case _ConversationProjections.SNIPPET:
           this.snippet = value;
@@ -688,6 +703,9 @@ class SmsConversation {
         case _ConversationProjections.MSG_COUNT:
           this.messageCount = int.tryParse(value!);
           break;
+        // case _ConversationProjections.DATE:
+        //   this.date = valueInt!;
+        //   break;
       }
     }
   }

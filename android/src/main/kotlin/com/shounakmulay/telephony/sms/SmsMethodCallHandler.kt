@@ -63,6 +63,7 @@ class SmsMethodCallHandler(
   private var selection: String? = null
   private var selectionArgs: List<String>? = null
   private var sortOrder: String? = null
+  private var limit: Int? = null
 
   private lateinit var messageBody: String
   private lateinit var address: String
@@ -91,6 +92,7 @@ class SmsMethodCallHandler(
         selection = call.argument(SELECTION)
         selectionArgs = call.argument(SELECTION_ARGS)
         sortOrder = call.argument(SORT_ORDER)
+        limit = call.argument("limit")
 
         handleMethod(action, SMS_QUERY_REQUEST_CODE)
       }
@@ -181,7 +183,7 @@ class SmsMethodCallHandler(
       SmsAction.GET_CONVERSATIONS -> ContentUri.CONVERSATIONS
       else -> throw IllegalArgumentException()
     }
-    val messages = smsController.getMessages(contentUri, projection!!, selection, selectionArgs, sortOrder)
+    val messages = smsController.getMessages(contentUri, projection!!, selection, selectionArgs, sortOrder, limit)
     result.success(messages)
   }
 
